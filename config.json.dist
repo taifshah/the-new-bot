@@ -1,7 +1,7 @@
 {
-  "botToken": "NTE",
-  "username": "",
-  "postingKey": "5...",
+  "botToken": "DISCORD_BOT_TOKEN",
+  "username": "WEKU_USERNAME",
+  "postingKey": "WEKU_WIF",
   "weight": 10000,
   "commandPrefix" : "$"
 }

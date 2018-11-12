@@ -5,7 +5,7 @@
   "main": "bot.js",
   "scripts": {
     "test": "mocha",
-    "start": "node bot.js"
+    "start": "node deploy.js && node bot.js"
   },
   "repository": {
     "type": "git",
