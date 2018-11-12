@@ -1,0 +1,30 @@
+{
+  "name": "test-vote-bot",
+  "version": "0.1.0",
+  "description": "A bot, which vote for Weku posts in Discord.",
+  "main": "bot.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:Sohel12/test-vote-bot.git"
+  },
+  "keywords": [
+    "weku",
+    "discord",
+    "votebot"
+  ],
+  "author": "Serhiy Walker <zavzyat@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.4.2",
+    "@steemit/steem-js": "^0.7.2",
+    "sprintf-js": "^1.1.1",
+    "url-parse": "^1.4.4"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "mock-require": "^3.0.2"
+  }
+}

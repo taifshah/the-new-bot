@@ -1,0 +1,7 @@
+{
+  "botToken": "NTE",
+  "username": "",
+  "postingKey": "5...",
+  "weight": 10000,
+  "commandPrefix" : "$"
+}
