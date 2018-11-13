@@ -4,5 +4,5 @@
   "upvotePostUrlError": "<@%s> We can't use your post link for upvote. Please recheck your command. It should be `%supvote (postlink)`.",
   "upvotePostNotFound": "<@%s> We couldn't find your post, do you put the right link?",
   "upvotePostVotedAlready": "<@%s> Your post was voted by @%s account already.",
-  "upvoteSuccess": ":tada:Congratulations Mr. <@%s> Your Post has been Upvoted by @%s.first use #nirob tag @nirob very good guy do not forget him"
+  "upvoteSuccess": ":tada:Congratulations Mr. <@%s> Your Post has been Upvoted by @%s. First use #nirob tag. @nirob very good guy. Do not forget him"
 }
