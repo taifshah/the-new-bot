@@ -3,5 +3,7 @@
   "username": "WEKU_USERNAME",
   "postingKey": "WEKU_WIF",
   "weight": 100,
-  "commandPrefix" : "$"
+  "commandPrefix" : "$",
+  "adminList": ["354999742318641193", "411865062731677696"],
+  "runtimeConfigFile": "config-runtime.json"
 }

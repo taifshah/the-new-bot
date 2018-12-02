@@ -1,17 +1,20 @@
-"use strict";
+'use strict';
 
 let Discord = require(`discord.js`)
-    , helper = require(`./helper`)
-    , config = require(`./config`)
+    , BotHelper = require(`./bot-helper`)
+    , ConfigProvider = require(`./config/provider`)
     , bot = new Discord.Client()
 ;
 
 bot.on(`ready`, () => {
     console.info('Bot has started');
 
-    helper.updateVotingPowerStatus(bot, config.username);
-    setInterval(function() {
-        helper.updateVotingPowerStatus(bot, config.username);
+    const username = ConfigProvider.get(`username`);
+
+    BotHelper.updateVotingPowerStatus(bot, username);
+    setInterval(
+        function() {
+            BotHelper.updateVotingPowerStatus(bot, username);
         },
         1000 * 60 // every 1 minute
     );
@@ -24,16 +27,16 @@ bot.on(`message`, message => {
     if (!message.content) {
         return; // maybe will be useful
     }
-    if (message.content[0] !== config.commandPrefix) {
+    if (message.content[0] !== ConfigProvider.get(`commandPrefix`)) {
         return; // ignore not command messages
     }
 
-    let parts = message.content.substr(1).split(` `)
+    let parts = message.content.substr(1).trim().split(` `)
         , command = parts[0]
         , params = parts.splice(1)
     ;
 
-    helper.handleBotCommand(command, params, message);
+    BotHelper.handleBotCommand(command, params, message);
 });
 
-bot.login(config.botToken);
+bot.login(ConfigProvider.get(`botToken`));
