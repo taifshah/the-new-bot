@@ -2,6 +2,7 @@
 
 const sprintf = require(`sprintf-js`).sprintf
     , fs = require(`fs`)
+    , ConfigParameter = require(`./parameter`)
 ;
 
 let runtimeConfig = {}
@@ -37,7 +38,9 @@ module.exports = class ConfigProvider {
             delete runtimeConfig[name];
         } else {
             switch (name) {
-                case `weight`:
+                case ConfigParameter.WEIGHT:
+                case ConfigParameter.MIN_POST_AGE:
+                case ConfigParameter.MAX_POST_AGE:
                     runtimeConfig[name] = value;
                     break;
             }

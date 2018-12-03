@@ -1,6 +1,8 @@
 'use strict';
 
-module.exports = class ConfigValuePreformatter {
+const ConfigParameter = require(`./parameter`);
+
+module.exports = class ConfigValuePreFormatter {
     /**
      * Formats received new config parameter value to working look
      * @param {string} name    Name of config parameter.
@@ -10,8 +12,11 @@ module.exports = class ConfigValuePreformatter {
      */
     static run(name, options) {
         switch (name) {
-            case `weight`:
+            case ConfigParameter.WEIGHT:
                 return Number(options[0]);
+            case ConfigParameter.MIN_POST_AGE:
+            case ConfigParameter.MAX_POST_AGE:
+                return options.join(` `);
             default:
                 return undefined;
         }

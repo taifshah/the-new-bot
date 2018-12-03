@@ -1,11 +1,14 @@
 'use strict';
 
-let sprintf = require(`sprintf-js`).sprintf
+const chrono = require(`chrono-node`)
+    , sprintf = require(`sprintf-js`).sprintf
     , Message = require(`discord.js`).Message
     , messages = require(`./messages`)
+    , ConfigParameter = require(`./config/parameter`)
     , ConfigProvider = require(`./config/provider`)
     , ConfigValidator = require(`./config/validator`)
-    , ConfigValuePreformatter = require(`./config/value-preformatter`)
+    , ConfigValuePreFormatter = require(`./config/value-pre-formatter`)
+    , ConfigValuePostFormatter = require(`./config/value-post-formatter`)
     , Adapter = require(`./adapter`).Adapter
     , tool = require(`./tool`)
 ;
@@ -29,7 +32,7 @@ module.exports = class BotHelper {
                     message.channel.send(sprintf(
                         messages.permissionDenied,
                         message.author.id,
-                        ConfigProvider.get(`commandPrefix`),
+                        ConfigProvider.get(ConfigParameter.COMMAND_PREFIX),
                         command
                     ));
 
@@ -44,7 +47,7 @@ module.exports = class BotHelper {
                 message.channel.send(sprintf(
                     messages.unsupportedCommand,
                     message.author.id,
-                    ConfigProvider.get(`commandPrefix`),
+                    ConfigProvider.get(ConfigParameter.COMMAND_PREFIX),
                     command
                 ));
         }
@@ -54,8 +57,8 @@ module.exports = class BotHelper {
         message.channel.send(sprintf(
             messages.info,
             message.author.id,
-            ConfigProvider.get(`username`),
-            ConfigProvider.get(`commandPrefix`)
+            ConfigProvider.get(ConfigParameter.USERNAME),
+            ConfigProvider.get(ConfigParameter.COMMAND_PREFIX)
         ))
     }
 
@@ -64,7 +67,7 @@ module.exports = class BotHelper {
             message.channel.send(sprintf(
                 messages.configInfo,
                 message.author.id,
-                ConfigProvider.get(`commandPrefix`)
+                ConfigProvider.get(ConfigParameter.COMMAND_PREFIX)
             ));
 
             return;
@@ -81,7 +84,7 @@ module.exports = class BotHelper {
         }
 
         const parameterName = params[0]
-            , parameterValue = ConfigValuePreformatter.run(parameterName, params.splice(1))
+            , parameterValue = ConfigValuePreFormatter.run(parameterName, params.splice(1))
         ;
 
         let errors = [];
@@ -102,7 +105,7 @@ module.exports = class BotHelper {
             return;
         }
 
-        ConfigProvider.set(parameterName, parameterValue);
+        ConfigProvider.set(parameterName, ConfigValuePostFormatter.run(parameterName, parameterValue));
         message.channel.send(sprintf(
             messages.configParameterValueChanged,
             message.author.id,
@@ -117,7 +120,7 @@ module.exports = class BotHelper {
             message.channel.send(sprintf(
                 messages.upvotePostUrlError,
                 message.author.id,
-                ConfigProvider.get(`commandPrefix`)
+                ConfigProvider.get(ConfigParameter.COMMAND_PREFIX)
             ));
 
             return
@@ -128,7 +131,7 @@ module.exports = class BotHelper {
             message.channel.send(sprintf(
                 messages.upvotePostNotFound,
                 message.author.id,
-                ConfigProvider.get(`commandPrefix`)
+                ConfigProvider.get(ConfigParameter.COMMAND_PREFIX)
             ));
 
             return
@@ -138,7 +141,10 @@ module.exports = class BotHelper {
             postParams.author,
             postParams.permlink,
             function (result) {
-                let voterUsername = ConfigProvider.get(`username`);
+                const voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
+                    , minPostAge = ConfigProvider.get(ConfigParameter.MIN_POST_AGE)
+                    , maxPostAge = ConfigProvider.get(ConfigParameter.MAX_POST_AGE)
+                ;
 
                 if (
                     `active_votes` in result
@@ -153,12 +159,43 @@ module.exports = class BotHelper {
 
                     return;
                 }
+
+                if (`created` in result && (minPostAge || maxPostAge)) {
+                    const postCreatedDate = chrono.parseDate(result.created);
+                    if (minPostAge) {
+                        const minPostDate = chrono.parseDate(minPostAge);
+                        if (postCreatedDate > minPostDate) {
+                            message.channel.send(sprintf(
+                                messages.upvotePostTooEarly,
+                                message.author.id,
+                                minPostAge,
+                                maxPostAge
+                            ));
+
+                            return;
+                        }
+                    }
+                    if (maxPostAge) {
+                        const maxPostDate = chrono.parseDate(maxPostAge);
+                        if (postCreatedDate < maxPostDate) {
+                            message.channel.send(sprintf(
+                                messages.upvotePostTooLate,
+                                message.author.id,
+                                minPostAge,
+                                maxPostAge
+                            ));
+
+                            return;
+                        }
+                    }
+                }
+
                 Adapter.instance().processVote(
-                    ConfigProvider.get(`postingKey`),
+                    ConfigProvider.get(ConfigParameter.POSTING_KEY),
                     voterUsername,
                     postParams.author,
                     postParams.permlink,
-                    ConfigProvider.get(`weight`) * 100,
+                    ConfigProvider.get(ConfigParameter.WEIGHT) * 100,
                     function () {
                         message.channel.send(sprintf(messages.upvoteSuccess, message.author.id, voterUsername));
                     },
@@ -185,11 +222,12 @@ module.exports = class BotHelper {
      * @return {boolean} Whether user has permission to perform command or not.
      */
     static checkUserPermission(command, message) {
-        let admins = ConfigProvider.get(`adminList`);
+        let admins = ConfigProvider.get(ConfigParameter.ADMIN_LIST);
         if (undefined === admins) {
             return true;
         } else {
             return admins.includes(message.author.id);
         }
     }
+
 };
