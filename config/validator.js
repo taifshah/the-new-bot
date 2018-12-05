@@ -19,6 +19,8 @@ module.exports = class ConfigValidator {
         switch (name) {
             case ConfigParameter.WEIGHT:
                 return ConfigValidator.validateWeight(value);
+            case ConfigParameter.MIN_VP:
+                return ConfigValidator.validateMinVp(value);
             case ConfigParameter.MIN_POST_AGE:
                 return ConfigValidator.validateMinPostAge(value);
             case ConfigParameter.MAX_POST_AGE:
@@ -38,6 +40,20 @@ module.exports = class ConfigValidator {
         const validator = new Validator();
 
         validator(value).isNumber().isInRange(0.01, 100);
+
+        return validator.run();
+    }
+
+    /**
+     * Validates "minVp" config parameter
+     * @param {*} value New value for config parameter.
+     *
+     * @return {Array} List of errors, empty if all fine.
+     */
+    static validateMinVp(value) {
+        const validator = new Validator();
+
+        validator(value).isNumber().integer().isInRange(1, 99);
 
         return validator.run();
     }

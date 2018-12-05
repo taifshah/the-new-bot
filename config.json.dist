@@ -3,6 +3,7 @@
   "username": "WEKU_USERNAME",
   "postingKey": "WEKU_WIF",
   "weight": 100,
+  "minVp": 60,
   "minPostAge": "30 minutes ago",
   "maxPostAge": "4 days ago",
   "commandPrefix" : "$",

@@ -88,7 +88,7 @@ module.exports = class BotHelper {
         ;
 
         let errors = [];
-        if (undefined === parameterValue) {
+        if (null === parameterValue) {
             errors = [sprintf(`Config parameter "%s" cannot be changed.`, parameterName)];
         } else {
             errors = ConfigValidator.validate(parameterName, parameterValue);
@@ -223,7 +223,7 @@ module.exports = class BotHelper {
      */
     static checkUserPermission(command, message) {
         let admins = ConfigProvider.get(ConfigParameter.ADMIN_LIST);
-        if (undefined === admins) {
+        if (null === admins) {
             return true;
         } else {
             return admins.includes(message.author.id);

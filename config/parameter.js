@@ -4,6 +4,8 @@
  * Contains list of available config parameters
  * @typedef {Object} ConfigParameter
  * @property {String} WEIGHT         Weight of vote
+ * @property {String} MIN_VP         Minimum value of VP when bot will perform vote.
+ *                                   If VP less this value, bot will stop voting.
  * @property {String} MIN_POST_AGE   Minimum age of post to receive vote
  * @property {String} MAX_POST_AGE   Maximum age of post to receive vote
  * @property {String} USERNAME       Username of account which will vote for Post
@@ -14,6 +16,7 @@
 let ConfigParameter = {}
     , parameterList = {
         weight: `WEIGHT`
+        , minVp: `MIN_VP`
         , minPostAge: `MIN_POST_AGE`
         , maxPostAge: `MAX_POST_AGE`
         , username: `USERNAME`

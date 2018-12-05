@@ -8,17 +8,18 @@ module.exports = class ConfigValuePreFormatter {
      * @param {string} name    Name of config parameter.
      * @param {Array}  options Array with options for new value of config parameter.
      *
-     * @return {*|undefined} Working value of config parameter or undefined for non supported values
+     * @return {*|null} Working value of config parameter or null for non supported values
      */
     static run(name, options) {
         switch (name) {
             case ConfigParameter.WEIGHT:
+            case ConfigParameter.MIN_VP:
                 return Number(options[0]);
             case ConfigParameter.MIN_POST_AGE:
             case ConfigParameter.MAX_POST_AGE:
                 return options.join(` `);
             default:
-                return undefined;
+                return null;
         }
     }
 };

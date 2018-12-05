@@ -11,11 +11,12 @@ module.exports = class ConfigValuePostFormatter {
      * @param {string} name  Name of config parameter.
      * @param {*}      value New value for config parameter.
      *
-     * @return {*|undefined} Working value of config parameter or undefined for non supported values
+     * @return {*|null} Working value of config parameter or null for non supported values
      */
     static run(name, value) {
         switch (name) {
             case ConfigParameter.WEIGHT:
+            case ConfigParameter.MIN_VP:
                 return value;
             case ConfigParameter.MIN_POST_AGE:
             case ConfigParameter.MAX_POST_AGE:
@@ -23,7 +24,7 @@ module.exports = class ConfigValuePostFormatter {
 
                 return moment(parsedDate).fromNow();
             default:
-                return undefined;
+                return null;
         }
     }
 };

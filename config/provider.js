@@ -13,7 +13,7 @@ module.exports = class ConfigProvider {
     /**
      * Returns current value of config parameter
      * @param {string} name Name of config parameter.
-     * @return {*|undefined} Value of config parameter or undefined if parameter doesn't exists.
+     * @return {*|null} Value of config parameter or null if parameter doesn't exists.
      */
     static get(name) {
         ConfigProvider.load();
@@ -21,7 +21,7 @@ module.exports = class ConfigProvider {
         if (name in runtimeConfig) {
             return runtimeConfig[name];
         } else {
-            return undefined;
+            return null;
         }
     }
 
@@ -34,16 +34,10 @@ module.exports = class ConfigProvider {
         if (false === (name in runtimeConfig)) {
             return;
         }
-        if (undefined === value) {
+        if (null === value || undefined === value) {
             delete runtimeConfig[name];
         } else {
-            switch (name) {
-                case ConfigParameter.WEIGHT:
-                case ConfigParameter.MIN_POST_AGE:
-                case ConfigParameter.MAX_POST_AGE:
-                    runtimeConfig[name] = value;
-                    break;
-            }
+            runtimeConfig[name] = value;
         }
         ConfigProvider.dump();
     }
