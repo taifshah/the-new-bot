@@ -1,32 +1,49 @@
-"use strict";
+'use strict';
 
-let fs = require(`fs`);
+const fsReadFilePromise = require(`fs-readfile-promise`)
+    , fs = require(`fs`)
+    , configPath = `./config.json`
+    , encoding = `utf8`
+;
 
-fs.readFile(
-    `./config.json.dist`,
-    `utf8`,
-    function (err, data) {
-        if (err) {
-            console.error(err);
+if (false === fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({}));
+}
 
-            return;
+Promise.all([
+    fsReadFilePromise(`./config.json.dist`, encoding)
+    , fsReadFilePromise(configPath, encoding)
+]).then(values => {
+    let distConfig = JSON.parse(values[0])
+        , config = JSON.parse(values[1])
+        , wasChanged = false
+    ;
+
+    for (let parameterName in distConfig) {
+        if (false === (parameterName in config)) {
+            config[parameterName] = distConfig[parameterName] in process.env
+                ? process.env[distConfig[parameterName]]
+                : distConfig[parameterName]
+            ;
+            wasChanged = true;
         }
-        let config = JSON.parse(data);
-        for (let i in config) {
-            if (config[i] in process.env) {
-                config[i] = process.env[config[i]]
-            }
-        }
-
-        fs.writeFile(
-            `./config.json`,
-            JSON.stringify(config),
-            `utf8`,
-            function (err) {
-                if (err) {
-                    console.error(err);
-                }
-            }
-        );
     }
-);
+    if (false === wasChanged) {
+        console.info(`Config Deploy: No new parameters added - skipped.`);
+
+        return;
+    }
+
+    fs.writeFile(
+        configPath,
+        JSON.stringify(config),
+        encoding,
+        function (err) {
+            if (err) {
+                console.error(err);
+            } else {
+                console.info(`Config Deploy: deployed.`)
+            }
+        }
+    );
+});

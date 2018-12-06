@@ -6,6 +6,7 @@ const sprintf = require(`sprintf-js`).sprintf
 
 let runtimeConfig = {}
     , configLoaded = false
+    , runtimeConfigDir = __dirname + `/..`
 ;
 
 module.exports = class ConfigProvider {
@@ -62,6 +63,14 @@ module.exports = class ConfigProvider {
     }
 
     /**
+     * Resets current config values
+     */
+    static reset() {
+        runtimeConfig = {};
+        configLoaded = false;
+    }
+
+    /**
      * Stores current config parameters to file
      */
     static dump() {
@@ -78,16 +87,24 @@ module.exports = class ConfigProvider {
     }
 
     /**
+     * Changes runtime directory where config files should be located
+     * @param {string} dir Path to directory.
+     */
+    static setRuntimeDir(dir) {
+        runtimeConfigDir = dir;
+    }
+
+    /**
      * Provides path to config file
      * @param {boolean} runtime Specifies which config file path returns, runtime or not.
      * @return {string} Path to config file.
      */
     static getConfigPath(runtime = true) {
-        let configPath = __dirname + `/../config.json`;
+        const configPath = __dirname + `/../config.json`;
         if (runtime) {
             const config = require(configPath);
 
-            return sprintf(__dirname + `/../%s`, config.runtimeConfigFile);
+            return sprintf(`%s/%s`, runtimeConfigDir, config.runtimeConfigFile);
         } else {
             return configPath;
         }
