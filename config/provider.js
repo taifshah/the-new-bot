@@ -2,7 +2,6 @@
 
 const sprintf = require(`sprintf-js`).sprintf
     , fs = require(`fs`)
-    , ConfigParameter = require(`./parameter`)
 ;
 
 let runtimeConfig = {}

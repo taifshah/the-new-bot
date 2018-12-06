@@ -4,7 +4,7 @@
   "description": "A bot, which vote for Weku posts in Discord.",
   "main": "bot.js",
   "scripts": {
-    "test": "NODE_ENV=test mocha",
+    "test": "NODE_ENV=test mocha --recursive -r chai/register-should",
     "start": "node deploy.js && node bot.js"
   },
   "repository": {
@@ -29,7 +29,9 @@
   },
   "devDependencies": {
     "mocha": "^5.2.0",
-    "mock-require": "^3.0.2"
+    "mock-require": "^3.0.2",
+    "chai": "^4.2.0",
+    "faker": "^4.1.0"
   },
   "engines": {
     "node": "10.x"
