@@ -2,7 +2,7 @@
 
 const chrono = require(`chrono-node`)
     , sprintf = require(`sprintf-js`).sprintf
-    , Message = require(`discord.js`).Message
+    , DiscordMessage = require(`discord.js`).Message
     , messages = require(`./messages`)
     , ConfigParameter = require(`./config/parameter`)
     , ConfigProvider = require(`./config/provider`)
@@ -216,8 +216,8 @@ module.exports = class BotHelper {
 
     /**
      * Checks user permission to perform command.
-     * @param {string} command Name of command to check.
-     * @param {Message} message Message object in which command was received.
+     * @param {string}         command Name of command to check.
+     * @param {DiscordMessage} message Message object in which command was received.
      *
      * @return {boolean} Whether user has permission to perform command or not.
      */

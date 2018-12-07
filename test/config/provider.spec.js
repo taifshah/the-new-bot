@@ -41,7 +41,7 @@ describe(`ConfigProvider`, () => {
                 , newConfig = {}
             ;
             do {
-                weightNewValue = faker.random.number(100);
+                weightNewValue = faker.random.number({min: 0.01, max: 100});
             } while (Number(baseConfig[ConfigParameter.WEIGHT]) === weightNewValue);
 
             newConfig[ConfigParameter.WEIGHT] = weightNewValue;
@@ -65,7 +65,7 @@ describe(`ConfigProvider`, () => {
             const paramName = ConfigParameter.WEIGHT;
             let paramNewValue = null;
             do {
-                paramNewValue = faker.random.number(100);
+                paramNewValue = faker.random.number({min: 0.01, max: 100});
             } while (ConfigProvider.get(paramName) === paramNewValue);
 
             // when
