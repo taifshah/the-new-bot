@@ -3,22 +3,30 @@
 const chrono = require(`chrono-node`)
     , sprintf = require(`sprintf-js`).sprintf
     , DiscordMessage = require(`discord.js`).Message
+    , { ChainAdapter, ChainConstant, ChainTool } = require(`chain-tools-js`)
     , messages = require(`./messages`)
     , ConfigParameter = require(`./config/parameter`)
     , ConfigProvider = require(`./config/provider`)
     , ConfigValidator = require(`./config/validator`)
     , ConfigValuePreFormatter = require(`./config/value-pre-formatter`)
     , ConfigValuePostFormatter = require(`./config/value-post-formatter`)
-    , Adapter = require(`./adapter`).Adapter
     , tool = require(`./tool`)
 ;
 
 module.exports = class BotHelper {
 
-    static updateVotingPowerStatus(bot, username) {
-        Adapter.instance().processAccountInfo(username, function (account) {
-            bot.user.setActivity(sprintf(`VP - %s%%.`, tool.calculateVotingPower(account)), { type: `WATCHING` });
-        });
+    static async updateVotingPowerStatus(bot, username) {
+        try {
+            const wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
+                , account = await wekuAdapter.apiGetAccount(username)
+            ;
+            bot.user.setActivity(
+                sprintf(`VP - %s%%.`, ChainTool.calculateAccountVotingPower(account))
+                , { type: `WATCHING` }
+            );
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     static handleBotCommand(command, params, message) {
@@ -41,7 +49,7 @@ module.exports = class BotHelper {
                 BotHelper.handleConfigCommand(params, message);
                 break;
             case `upvote`:
-                BotHelper.handleUpvoteCommand(message, params);
+                BotHelper.handleUpvoteCommand(params, message);
                 break;
             default:
                 message.channel.send(sprintf(
@@ -114,7 +122,7 @@ module.exports = class BotHelper {
         ));
     }
 
-    static handleUpvoteCommand(message, params) {
+    static async handleUpvoteCommand(params, message) {
         if (params.length < 1 || !params[0]) {
             console.error(`Failed to receive post URL.`, params);
             message.channel.send(sprintf(
@@ -125,7 +133,7 @@ module.exports = class BotHelper {
 
             return
         }
-        let postParams = tool.parsePostUrl(params[0]);
+        const postParams = tool.parsePostUrl(params[0]);
         if (postParams.length < 2 || !postParams.author || !postParams.permlink) {
             console.error(`Failed to parse post URL`, postParams);
             message.channel.send(sprintf(
@@ -137,81 +145,117 @@ module.exports = class BotHelper {
             return
         }
 
-        Adapter.instance().processGetContent(
-            postParams.author,
-            postParams.permlink,
-            function (result) {
-                const voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
-                    , minPostAge = ConfigProvider.get(ConfigParameter.MIN_POST_AGE)
-                    , maxPostAge = ConfigProvider.get(ConfigParameter.MAX_POST_AGE)
-                ;
+        const minVp = ConfigProvider.get(ConfigParameter.MIN_VP)
+            , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
+            , wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
+        ;
+        if (minVp) {
+            let account = null;
+            try {
+                account = await wekuAdapter.apiGetAccount(voterUsername);
+            } catch (err) {
+                console.error(err);
+                message.channel.send(sprintf(messages.systemError, message.author.id));
 
-                if (
-                    `active_votes` in result
-                    && result.active_votes.length > 0
-                    && tool.isArrayContainsProperty(result.active_votes, `voter`, voterUsername)
-                ) {
+                return;
+            }
+
+            const accountVp = ChainTool.calculateAccountVotingPower(account);
+            if (accountVp < minVp) {
+                message.channel.send(sprintf(
+                    messages.upvoteVpTooLow
+                    , message.author.id
+                    , voterUsername
+                    , accountVp
+                    , minVp
+                ));
+
+                return;
+            }
+        }
+
+        let postContent = null;
+        try {
+            postContent = await wekuAdapter.apiGetContent(
+                postParams.author
+                , postParams.permlink
+            );
+        } catch (err) {
+            console.error(err);
+            message.channel.send(sprintf(messages.systemError, message.author.id));
+
+            return;
+        }
+        if (0 === postContent.id) {
+            message.channel.send(sprintf(messages.upvotePostNotFound, message.author.id));
+
+            return;
+        }
+        if (
+            `active_votes` in postContent
+            && postContent.active_votes.length > 0
+            && tool.isArrayContainsProperty(postContent.active_votes, `voter`, voterUsername)
+        ) {
+            message.channel.send(sprintf(
+                messages.upvotePostVotedAlready,
+                message.author.id,
+                voterUsername
+            ));
+
+            return;
+        }
+
+        const minPostAge = ConfigProvider.get(ConfigParameter.MIN_POST_AGE)
+            , maxPostAge = ConfigProvider.get(ConfigParameter.MAX_POST_AGE)
+            , creationDateKey = `created`
+        ;
+        if (creationDateKey in postContent && (minPostAge || maxPostAge)) {
+            const postCreatedDate = chrono.parseDate(postContent[creationDateKey]);
+            if (minPostAge) {
+                const minPostDate = chrono.parseDate(minPostAge);
+                if (postCreatedDate > minPostDate) {
                     message.channel.send(sprintf(
-                        messages.upvotePostVotedAlready,
+                        messages.upvotePostTooEarly,
                         message.author.id,
-                        voterUsername
+                        minPostAge,
+                        maxPostAge
                     ));
 
                     return;
                 }
+            }
+            if (maxPostAge) {
+                const maxPostDate = chrono.parseDate(maxPostAge);
+                if (postCreatedDate < maxPostDate) {
+                    message.channel.send(sprintf(
+                        messages.upvotePostTooLate,
+                        message.author.id,
+                        minPostAge,
+                        maxPostAge
+                    ));
 
-                if (`created` in result && (minPostAge || maxPostAge)) {
-                    const postCreatedDate = chrono.parseDate(result.created);
-                    if (minPostAge) {
-                        const minPostDate = chrono.parseDate(minPostAge);
-                        if (postCreatedDate > minPostDate) {
-                            message.channel.send(sprintf(
-                                messages.upvotePostTooEarly,
-                                message.author.id,
-                                minPostAge,
-                                maxPostAge
-                            ));
-
-                            return;
-                        }
-                    }
-                    if (maxPostAge) {
-                        const maxPostDate = chrono.parseDate(maxPostAge);
-                        if (postCreatedDate < maxPostDate) {
-                            message.channel.send(sprintf(
-                                messages.upvotePostTooLate,
-                                message.author.id,
-                                minPostAge,
-                                maxPostAge
-                            ));
-
-                            return;
-                        }
-                    }
-                }
-
-                Adapter.instance().processVote(
-                    ConfigProvider.get(ConfigParameter.POSTING_KEY),
-                    voterUsername,
-                    postParams.author,
-                    postParams.permlink,
-                    ConfigProvider.get(ConfigParameter.WEIGHT) * 100,
-                    function () {
-                        message.channel.send(sprintf(messages.upvoteSuccess, message.author.id, voterUsername));
-                    },
-                    function () {
-                        message.channel.send(sprintf(messages.systemError, message.author.id));
-                    }
-                );
-            },
-            function (result) {
-                if (result && result.id === 0) {
-                    message.channel.send(sprintf(messages.upvotePostNotFound, message.author.id));
-                } else {
-                    message.channel.send(sprintf(messages.systemError, message.author.id));
+                    return;
                 }
             }
-        );
+        }
+
+        wekuAdapter.broadcastVote(
+            postParams.author,
+            postParams.permlink,
+            voterUsername,
+            ConfigProvider.get(ConfigParameter.POSTING_KEY),
+            ConfigProvider.get(ConfigParameter.WEIGHT) * 100
+        ).then((result) => {
+            message.channel.send(sprintf(
+                messages.upvoteSuccess
+                , message.author.id
+                , voterUsername
+            ));
+        }).catch((err) => {
+            console.error(err);
+
+            message.channel.send(sprintf(messages.systemError, message.author.id));
+        });
     }
 
     /**
