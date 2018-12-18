@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = class EnvProvider {
+module.exports = class {
     /**
      * Returns name of current environment
      * @return {string}
