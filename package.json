@@ -20,6 +20,7 @@
   "author": "Serhiy Walker <zavzyat@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@sentry/node": "^4.4.2",
     "@steemit/steem-js": "^0.7.3",
     "better-validator": "^2.1.8",
     "chain-tools-js": "github:zavz9t/chain-tools-js",
@@ -29,8 +30,7 @@
     "fs-readfile-promise": "^3.0.1",
     "moment": "^2.23.0",
     "sprintf-js": "^1.1.2",
-    "url-parse": "^1.4.4",
-    "@sentry/node": "^4.4.2"
+    "url-parse": "^1.4.4"
   },
   "devDependencies": {
     "chai": "^4.2.0",
