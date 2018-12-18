@@ -29,7 +29,8 @@
     "fs-readfile-promise": "^3.0.1",
     "moment": "^2.23.0",
     "sprintf-js": "^1.1.2",
-    "url-parse": "^1.4.4"
+    "url-parse": "^1.4.4",
+    "@sentry/node": "^4.4.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
