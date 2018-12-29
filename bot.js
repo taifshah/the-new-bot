@@ -11,6 +11,8 @@ const Discord = require(`discord.js`)
 
 Sentry.init({ dsn: `https://0c4863b9f31942ee937345ec6c3617b2@sentry.io/1356007` });
 
+bot.on(`error`, console.error);
+
 bot.on(`ready`, () => {
     console.info(`Bot has started`);
 

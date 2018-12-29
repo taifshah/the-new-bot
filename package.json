@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_ENV=test NODE_PATH=$PWD mocha --recursive -r chai/register-should",
     "start": "NODE_ENV=dev NODE_PATH=$PWD node bot.js",
-    "postinstall": "npm update && node deploy.js"
+    "postinstall": "node deploy.js"
   },
   "repository": {
     "type": "git",
