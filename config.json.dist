@@ -8,5 +8,6 @@
   "maxPostAge": "4 days ago",
   "commandPrefix" : "$",
   "adminList": ["354999742318641193", "411865062731677696"],
-  "runtimeConfigFile": "config-runtime.json"
+  "runtimeConfigFile": "config-runtime.json",
+  "errorTrackerDsn": "ERROR_TRACKER_DSN"
 }

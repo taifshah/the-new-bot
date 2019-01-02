@@ -9,7 +9,7 @@ const Discord = require(`discord.js`)
     , Sentry = require('@sentry/node')
 ;
 
-Sentry.init({ dsn: `https://0c4863b9f31942ee937345ec6c3617b2@sentry.io/1356007` });
+Sentry.init({ dsn: ConfigProvider.get(ConfigParameter.ERROR_TRACKER_DSN) });
 
 bot.on(`error`, console.error);
 

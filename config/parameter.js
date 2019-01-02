@@ -14,6 +14,7 @@
  * @property {String} COMMAND_PREFIX       A character which indicates that message is a command
  * @property {String} ADMIN_LIST           List of bot administrators
  * @property {String} RUNTIME_CONFIG_FILE  Name of runtime config file
+ * @property {String} ERROR_TRACKER_DSN    Credentials for access to Error Tracking Tool
  */
 let ConfigParameter = {}
     , parameterList = {
@@ -27,6 +28,7 @@ let ConfigParameter = {}
         , commandPrefix: `COMMAND_PREFIX`
         , adminList: `ADMIN_LIST`
         , runtimeConfigFile: `RUNTIME_CONFIG_FILE`
+        , errorTrackerDsn: `ERROR_TRACKER_DSN`
     }
 ;
 
