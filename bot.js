@@ -7,6 +7,7 @@ const Discord = require(`discord.js`)
     , ConfigProvider = require(`./config/provider`)
     , bot = new Discord.Client()
     , Sentry = require('@sentry/node')
+    , messages = require(`./messages`)
 ;
 
 Sentry.init({ dsn: ConfigProvider.get(ConfigParameter.ERROR_TRACKER_DSN) });
@@ -44,6 +45,15 @@ bot.on(`message`, message => {
         , command = parts[0]
         , params = parts.splice(1)
     ;
+    if (
+        message.channel instanceof Discord.DMChannel
+        && false === BotHelper.checkUserPermission(command, message)
+    ) {
+        // only admins can send DM messages
+        BotHelper.sendMessage(message, messages.dmMessagesDeprecated);
+
+        return;
+    }
 
     CommandHandler.run(command, params, message)
         .catch((err) => {

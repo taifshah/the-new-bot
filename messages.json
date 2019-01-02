@@ -13,5 +13,6 @@
   "configInfo": "<@%1$s> Using config command you can receive current config value of specified parameter `%2$sconfig (parameter)` or change it value `%2$sconfig (parameter) (new value)`. Be careful with this command :wink:\n\nParameters:\n\t**weight** \t\t\t- Weight of vote\n\t**minVp** \t\t\t- Minimum value of VP when bot will vote\n\t**minPostAge** - Minimum age of post to receive a vote\n\t**maxPostAge** - Maximum age of post to receive a vote",
   "configParameterValue": "<@%s> Current value of \"%s\" parameter is: %s",
   "configParameterValueError": "<@%s> Wrong new value of \"%s\" parameter. Errors: %s",
-  "configParameterValueChanged": "<@%s> Value of \"%s\" parameter was changed successfully. New value: %s"
+  "configParameterValueChanged": "<@%s> Value of \"%s\" parameter was changed successfully. New value: %s",
+  "dmMessagesDeprecated": "Sorry, but DM messages are deprecated. Write commands to correspond channel at the server."
 }
