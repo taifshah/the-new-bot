@@ -15,6 +15,7 @@
  * @property {String} ADMIN_LIST           List of bot administrators
  * @property {String} RUNTIME_CONFIG_FILE  Name of runtime config file
  * @property {String} ERROR_TRACKER_DSN    Credentials for access to Error Tracking Tool
+ * @property {String} UPVOTE_SUCCESS_COMMENT Comment message which will be add to Upvoted post/comment
  */
 let ConfigParameter = {}
     , parameterList = {
@@ -29,6 +30,7 @@ let ConfigParameter = {}
         , adminList: `ADMIN_LIST`
         , runtimeConfigFile: `RUNTIME_CONFIG_FILE`
         , errorTrackerDsn: `ERROR_TRACKER_DSN`
+        , upvoteSuccessComment: `UPVOTE_SUCCESS_COMMENT`
     }
 ;
 

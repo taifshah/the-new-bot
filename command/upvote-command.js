@@ -45,8 +45,18 @@ module.exports = class extends require(`./abstract-command`) {
     }
 
     /**
+     * Provides list of methods which should be called after command's run
+     * @returns {string[]}
+     */
+    static getPostMethods() {
+        return [`addSuccessComment`];
+    }
+
+    /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     *
+     * @throws CommandEventError When received params is not valid URL
      */
     static validatePostUrl(params, message) {
         if (params.length < 1 || !params[0]) {
@@ -73,6 +83,8 @@ module.exports = class extends require(`./abstract-command`) {
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     *
+     * @throws CommandEventError When can't receive vote account or VP of account is too low
      */
     static async validateVp(params, message) {
         const minVp = ConfigProvider.get(ConfigParameter.MIN_VP)
@@ -109,6 +121,8 @@ module.exports = class extends require(`./abstract-command`) {
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     *
+     * @throws CommandEventError When can't receive info about post or some criteria are not met
      */
     static async validatePost(params, message) {
         const postParams = this[_parsePostParams](params)
@@ -182,19 +196,22 @@ module.exports = class extends require(`./abstract-command`) {
     /**
      * @param {Array}          params
      * @param {Discord.Message} message
+     *
+     * @throws CommandEventError If error during vote occurred
      */
-    static run(params, message) {
+    static async run(params, message) {
         const wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
             , postParams = this[_parsePostParams](params)
             , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
         ;
-        wekuAdapter.broadcastVote(
-            postParams.author,
-            postParams.permlink,
-            voterUsername,
-            ConfigProvider.get(ConfigParameter.POSTING_KEY),
-            ConfigProvider.get(ConfigParameter.WEIGHT) * 100
-        ).then((result) => {
+        try {
+            await wekuAdapter.broadcastVote(
+                voterUsername,
+                ConfigProvider.get(ConfigParameter.POSTING_KEY),
+                postParams.author,
+                postParams.permlink,
+                ConfigProvider.get(ConfigParameter.WEIGHT) * 100
+            );
             BotHelper.sendMessage(
                 message
                 , sprintf(
@@ -203,14 +220,35 @@ module.exports = class extends require(`./abstract-command`) {
                     , voterUsername
                 )
             );
-        }).catch((err) => {
+        } catch (err) {
             console.error(err);
 
-            BotHelper.sendMessage(
-                message
-                , sprintf(messages.systemError, BotHelper.getAuthorId(message))
+            throw new CommandEventError(sprintf(
+                messages.systemError
+                , BotHelper.getAuthorId(message)
+            ));
+        }
+    }
+
+    /**
+     * @param {string[]}       params
+     * @param {Discord.Message} message
+     */
+    static async addSuccessComment(params, message) {
+        const wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
+            , postParams = this[_parsePostParams](params)
+            , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
+        ;
+        try {
+            await wekuAdapter.broadcastComment(
+                voterUsername
+                , ConfigProvider.get(ConfigParameter.POSTING_KEY)
+                , ConfigProvider.get(ConfigParameter.UPVOTE_SUCCESS_COMMENT)
+                , { parent_author: postParams.author, parent_permlink: postParams.permlink }
             );
-        });
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     // private

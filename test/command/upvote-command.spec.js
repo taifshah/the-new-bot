@@ -14,7 +14,7 @@ const faker = require(`faker`)
     , messages = require(`../../messages`)
 ;
 
-describe(`UpvoteCommand`, () => {
+describe.only(`UpvoteCommand`, () => {
 
     /**
      * @param {Array}          params
@@ -61,6 +61,7 @@ describe(`UpvoteCommand`, () => {
 
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+            , mockCommand = sandbox.mock(UpvoteCommand)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -69,6 +70,8 @@ describe(`UpvoteCommand`, () => {
         ;
         mockAdapter.expects(`apiGetContent`).never();
         mockAdapter.expects(`broadcastVote`).never();
+
+        mockCommand.expects(`addSuccessComment`).never();
 
         // when
         await runCommand(params, stubMessage);
@@ -83,6 +86,7 @@ describe(`UpvoteCommand`, () => {
 
         mockAdapter.verify();
         mockChannel.verify();
+        mockCommand.verify();
     });
 
     it(`should handle if "apiGetAccount" will throw an error`, async () => {
@@ -102,6 +106,7 @@ describe(`UpvoteCommand`, () => {
 
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+            , mockCommand = sandbox.mock(UpvoteCommand)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -110,6 +115,8 @@ describe(`UpvoteCommand`, () => {
         ;
         mockAdapter.expects(`apiGetContent`).never();
         mockAdapter.expects(`broadcastVote`).never();
+
+        mockCommand.expects(`addSuccessComment`).never();
 
         // when
         await runCommand(params, stubMessage);
@@ -124,6 +131,7 @@ describe(`UpvoteCommand`, () => {
 
         mockAdapter.verify();
         mockChannel.verify();
+        mockCommand.verify();
     });
 
     it(`should not vote if post doesn't exists`, async () => {
@@ -153,6 +161,7 @@ describe(`UpvoteCommand`, () => {
 
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+            , mockCommand = sandbox.mock(UpvoteCommand)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -166,6 +175,8 @@ describe(`UpvoteCommand`, () => {
         ;
         mockAdapter.expects(`broadcastVote`).never();
 
+        mockCommand.expects(`addSuccessComment`).never();
+
         // when
         await runCommand(params, stubMessage);
 
@@ -176,6 +187,7 @@ describe(`UpvoteCommand`, () => {
 
         mockAdapter.verify();
         mockChannel.verify();
+        mockCommand.verify();
     });
 
     it(`should handle if "apiGetContent" thrown an error`, async () => {
@@ -202,6 +214,7 @@ describe(`UpvoteCommand`, () => {
 
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+            , mockCommand = sandbox.mock(UpvoteCommand)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -215,6 +228,8 @@ describe(`UpvoteCommand`, () => {
         ;
         mockAdapter.expects(`broadcastVote`).never();
 
+        mockCommand.expects(`addSuccessComment`).never();
+
         // when
         await runCommand(params, stubMessage);
 
@@ -225,6 +240,7 @@ describe(`UpvoteCommand`, () => {
 
         mockAdapter.verify();
         mockChannel.verify();
+        mockCommand.verify();
     });
 
     it(`should not vote if already voted for post before`, async () => {
@@ -255,6 +271,7 @@ describe(`UpvoteCommand`, () => {
 
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+            , mockCommand = sandbox.mock(UpvoteCommand)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -271,6 +288,8 @@ describe(`UpvoteCommand`, () => {
         ;
         mockAdapter.expects(`broadcastVote`).never();
 
+        mockCommand.expects(`addSuccessComment`).never();
+
         // when
         await runCommand(params, stubMessage);
 
@@ -281,6 +300,7 @@ describe(`UpvoteCommand`, () => {
 
         mockAdapter.verify();
         mockChannel.verify();
+        mockCommand.verify();
     });
 
     it(`should vote for post`, async () => {
@@ -327,13 +347,17 @@ describe(`UpvoteCommand`, () => {
         mockAdapter.expects(`broadcastVote`)
             .once()
             .withExactArgs(
-                postAuthor
-                , postPermlink
-                , voterUsername
+                voterUsername
                 , voterWif
+                , postAuthor
+                , postPermlink
                 , voteWeight * 100
             )
             .resolves({ success: true })
+        ;
+
+        mockAdapter.expects(`broadcastComment`).once()
+            .resolves({ id: faker.random.number() })
         ;
 
         // when
@@ -374,6 +398,7 @@ describe(`UpvoteCommand`, () => {
 
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+            , mockCommand = sandbox.mock(UpvoteCommand)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -388,13 +413,91 @@ describe(`UpvoteCommand`, () => {
         mockAdapter.expects(`broadcastVote`)
             .once()
             .withExactArgs(
-                postAuthor
-                , postPermlink
-                , voterUsername
+                voterUsername
                 , voterWif
+                , postAuthor
+                , postPermlink
                 , voteWeight * 100
             )
             .rejects()
+        ;
+
+        mockCommand.expects(`addSuccessComment`).never();
+
+        // when
+        await runCommand(params, stubMessage);
+
+        // then
+        spyAdapterFactory.alwaysCalledWithExactly(ChainConstant.WEKU)
+            .should.be.equal(true, `Only WEKU adapter should be created.`)
+        ;
+
+        mockAdapter.verify();
+        mockChannel.verify();
+        mockCommand.verify();
+    });
+
+    it(`should add right comment on success vote`, async () => {
+        // given
+        const configParamName = ConfigParameter.MIN_VP
+            , configParam = faker.random.number({min: 60, max: 99})
+            , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
+            , voterWif = ConfigProvider.get(ConfigParameter.POSTING_KEY)
+            , voteWeight = ConfigProvider.get(ConfigParameter.WEIGHT)
+            , account = {
+                name: voterUsername
+                , voting_power: (configParam + 5) * 100
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+            }
+            , userId = faker.random.number()
+            , postAuthor = faker.internet.userName().toLowerCase()
+            , postPermlink = faker.internet.userName().toLowerCase()
+            , params = [sprintf(`https://main.weku.io/category/@%s/%s`, postAuthor, postPermlink)]
+        ;
+        ConfigProvider.set(configParamName, configParam);
+
+        let { stubMessage, mockChannel } = mockDiscordMessage(
+            userId,
+            sprintf(
+                messages.upvoteSuccess
+                , userId
+                , voterUsername
+            )
+        );
+
+        const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
+            , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+        ;
+        mockAdapter.expects(`apiGetAccount`)
+            .once()
+            .withExactArgs(voterUsername)
+            .resolves(account)
+        ;
+        mockAdapter.expects(`apiGetContent`)
+            .once()
+            .withExactArgs(postAuthor, postPermlink)
+            .resolves({ id: faker.random.number() })
+        ;
+        mockAdapter.expects(`broadcastVote`)
+            .once()
+            .withExactArgs(
+                voterUsername
+                , voterWif
+                , postAuthor
+                , postPermlink
+                , voteWeight * 100
+            )
+            .resolves({ success: true })
+        ;
+        mockAdapter.expects(`broadcastComment`)
+            .once()
+            .withExactArgs(
+                voterUsername
+                , voterWif
+                , ConfigProvider.get(ConfigParameter.UPVOTE_SUCCESS_COMMENT)
+                , { parent_author: postAuthor, parent_permlink: postPermlink }
+            )
+            .resolves({ id: faker.random.number() })
         ;
 
         // when
