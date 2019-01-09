@@ -12,6 +12,8 @@ const faker = require(`faker`)
     , CommandHandler = require(`../../command-handler`)
     , UpvoteCommand = require(`../../command/upvote-command`)
     , messages = require(`../../messages`)
+    , accountDatetimeFormat = `YYYY-MM-DD[T]HH:mm:ss`
+    , lastPostValidValue = moment.utc(chrono.parseDate(`5 minutes ago`)).format(accountDatetimeFormat)
 ;
 
 describe(`UpvoteCommand`, () => {
@@ -41,7 +43,8 @@ describe(`UpvoteCommand`, () => {
             , account = {
                 name: username
                 , voting_power: (configParam - 30) * 100
-                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: lastPostValidValue
             }
             , userId = faker.random.number()
             , params = [sprintf(`https://main.weku.io/category/@%s/first-post`, username)]
@@ -56,6 +59,62 @@ describe(`UpvoteCommand`, () => {
                 , username
                 , ChainTool.calculateAccountVotingPower(account)
                 , configParam
+            )
+        );
+
+        const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
+            , mockAdapter = sandbox.mock(ChainAdapter.prototype)
+            , mockCommand = sandbox.mock(UpvoteCommand)
+        ;
+        mockAdapter.expects(`apiGetAccount`)
+            .once()
+            .withExactArgs(username)
+            .resolves(account)
+        ;
+        mockAdapter.expects(`apiGetContent`).never();
+        mockAdapter.expects(`broadcastVote`).never();
+
+        mockCommand.expects(`addSuccessComment`).never();
+
+        // when
+        await runCommand(params, stubMessage);
+
+        // then
+        spyAdapterFactory.callCount
+            .should.be.equal(1, `Only one adapter should be created.`)
+        ;
+        spyAdapterFactory.calledOnceWithExactly(ChainConstant.WEKU)
+            .should.be.equal(true, `Only WEKU adapter should be created.`)
+        ;
+
+        mockAdapter.verify();
+        mockChannel.verify();
+        mockCommand.verify();
+    });
+
+    it(`should not vote too often`, async () => {
+        // given
+        const configParamName = ConfigParameter.MIN_VP
+            , configParam = faker.random.number({min: 60, max: 99})
+            , username = ConfigProvider.get(ConfigParameter.USERNAME)
+            , lastPostDate = chrono.parseDate(`5 seconds ago`)
+            , account = {
+                name: username
+                , voting_power: (configParam + 15) * 100
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: moment.utc(lastPostDate).format(accountDatetimeFormat)
+            }
+            , userId = faker.random.number()
+            , params = [sprintf(`https://main.weku.io/category/@%s/first-post`, username)]
+        ;
+        ConfigProvider.set(configParamName, configParam);
+
+        let { stubMessage, mockChannel } = mockDiscordMessage(
+            userId,
+            sprintf(
+                messages.upvoteTooOften
+                , userId
+                , moment.utc(lastPostDate).fromNow()
             )
         );
 
@@ -107,6 +166,7 @@ describe(`UpvoteCommand`, () => {
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
             , mockCommand = sandbox.mock(UpvoteCommand)
+            , consoleErrorStub = sandbox.stub(console, `error`)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -142,7 +202,8 @@ describe(`UpvoteCommand`, () => {
             , account = {
                 name: username
                 , voting_power: (configParam + 5) * 100
-                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: lastPostValidValue
             }
             , userId = faker.random.number()
             , postAuthor = faker.internet.userName().toLowerCase()
@@ -198,7 +259,8 @@ describe(`UpvoteCommand`, () => {
             , account = {
                 name: username
                 , voting_power: (configParam + 5) * 100
-                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: lastPostValidValue
             }
             , userId = faker.random.number()
             , postAuthor = faker.internet.userName().toLowerCase()
@@ -215,6 +277,7 @@ describe(`UpvoteCommand`, () => {
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
             , mockCommand = sandbox.mock(UpvoteCommand)
+            , consoleErrorStub = sandbox.stub(console, `error`)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -251,7 +314,8 @@ describe(`UpvoteCommand`, () => {
             , account = {
                 name: voterUsername
                 , voting_power: (configParam + 5) * 100
-                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: lastPostValidValue
             }
             , userId = faker.random.number()
             , postAuthor = faker.internet.userName().toLowerCase()
@@ -313,7 +377,8 @@ describe(`UpvoteCommand`, () => {
             , account = {
                 name: voterUsername
                 , voting_power: (configParam + 5) * 100
-                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: lastPostValidValue
             }
             , userId = faker.random.number()
             , postAuthor = faker.internet.userName().toLowerCase()
@@ -382,7 +447,8 @@ describe(`UpvoteCommand`, () => {
             , account = {
                 name: voterUsername
                 , voting_power: (configParam + 5) * 100
-                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: lastPostValidValue
             }
             , userId = faker.random.number()
             , postAuthor = faker.internet.userName().toLowerCase()
@@ -399,6 +465,7 @@ describe(`UpvoteCommand`, () => {
         const spyAdapterFactory = sandbox.spy(ChainAdapter, `factory`)
             , mockAdapter = sandbox.mock(ChainAdapter.prototype)
             , mockCommand = sandbox.mock(UpvoteCommand)
+            , consoleErrorStub = sandbox.stub(console, `error`)
         ;
         mockAdapter.expects(`apiGetAccount`)
             .once()
@@ -447,7 +514,8 @@ describe(`UpvoteCommand`, () => {
             , account = {
                 name: voterUsername
                 , voting_power: (configParam + 5) * 100
-                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(`YYYY-MM-DDTHH:mm:ss`)
+                , last_vote_time: moment.utc(chrono.parseDate(`15 minutes ago`)).format(accountDatetimeFormat)
+                , last_post: lastPostValidValue
             }
             , userId = faker.random.number()
             , postAuthor = faker.internet.userName().toLowerCase()

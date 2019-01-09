@@ -2,6 +2,7 @@
 
 const { sprintf } = require(`sprintf-js`)
     , chrono = require(`chrono-node`)
+    , moment = require(`moment`)
     , Discord = require(`discord.js`)
     , { ChainTool, ChainAdapter, ChainConstant } = require(`chain-tools-js`)
     , DisplayToUserException = require(`../exception/DisplayToUserException`)
@@ -35,6 +36,7 @@ module.exports = class extends require(`./abstract-command`) {
         return new Promise(resolve => resolve({ params: params, message: message }))
             .then(this.validatePostUrl)
             .then(this.validateVp)
+            .then(this.validatePostInterval)
             .then(this.validatePost)
             .then(this.performVote)
             .then(this.addSuccessComment)
@@ -119,7 +121,54 @@ module.exports = class extends require(`./abstract-command`) {
             ));
         }
 
-        return { params: params, message: message, postParams: postParams };
+        return {
+            params: params
+            , message: message
+            , postParams: postParams
+            , account: account
+        };
+    }
+
+    /**
+     * @param {string[]}       params
+     * @param {Discord.Message} message
+     * @param {Object} postParams
+     * @param {Object} account Detail information about vote account
+     */
+    static async validatePostInterval({ params, message, postParams, account }) {
+        const voteInterval = ConfigProvider.get(ConfigParameter.VOTE_INTERVAL)
+            , lastPostKey = `last_post`
+        ;
+        if (
+            false === Boolean(voteInterval)
+            || false === (lastPostKey in account)
+        ) {
+            if (false === (lastPostKey in account)) {
+                console.error(new Error(sprintf(
+                    `Failed to receive last post "%s" from account info: %s`
+                    , lastPostKey
+                    , JSON.stringify(account)
+                )));
+            }
+            return { params: params, message: message, postParams: postParams };
+        }
+
+        const lastPostDate = chrono.parseDate(account[lastPostKey])
+            , timeDiff = (new Date().getTime() - lastPostDate.getTime()) / 1000
+        ;
+        if (timeDiff < voteInterval) {
+            throw new DisplayToUserException(sprintf(
+                messages.upvoteTooOften
+                , BotHelper.getAuthorId(message)
+                , moment.utc(lastPostDate).fromNow()
+            ));
+        }
+
+        return {
+            params: params
+            , message: message
+            , postParams: postParams
+        };
     }
 
     /**

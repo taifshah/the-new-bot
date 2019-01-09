@@ -4,6 +4,7 @@
   "postingKey": "WEKU_WIF",
   "weight": 100,
   "minVp": 60,
+  "voteInterval": 20,
   "minPostAge": "30 minutes ago",
   "maxPostAge": "4 days ago",
   "commandPrefix" : "$",

@@ -6,6 +6,7 @@
   "upvotePostVotedAlready": "<@%s> Your post was voted by **@%s** account already.",
   "upvotePostTooEarly": "<@%s> Posts can only be voted between \"%s\" and \"%s\" from it publication date. Please wait for this moment.",
   "upvotePostTooLate": "<@%s> Posts can only be voted between \"%s\" and \"%s\" from it publication date. This post doesn't meet that requirement...",
+  "upvoteTooOften": "<@%s> Bot cannot vote too often. It voted recently (%s). Please wait a little bit and retry.",
   "upvoteVpTooLow": "<@%s> `@%s` has %s%% VP left. It only votes when it has at least %s%% VP. Please try again once that has been reached. Current VP value you can see in status.",
   "upvoteSuccess": ":tada:Congratulations Mr. <@%s> Your Post has been Upvoted by **@%s**. First use #nirob tag.💞👬",
   "permissionDenied": "Sorry <@%s>, you have no permission to execute `%s%s` command. You can ask the administrators for help.",
