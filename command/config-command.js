@@ -4,7 +4,6 @@ const { sprintf } = require(`sprintf-js`)
     , Discord = require(`discord.js`)
     , messages = require(`../messages`)
     , BotHelper = require(`../bot-helper`)
-    , CommandEventError = require(`../command-event-error`)
     , ConfigParameter = require(`../config/parameter`)
     , ConfigProvider = require(`../config/provider`)
     , ConfigValidator = require(`../config/validator`)
@@ -17,77 +16,76 @@ const _parseParams = Symbol('parseParams');
 module.exports = class extends require(`./abstract-command`) {
 
     /**
-     * @returns {string}
+     * @inheritDoc
      */
     static getName() {
         return `config`;
     }
 
     /**
-     * {@inheritdoc}
-     */
-    static getPreMethods() {
-        return [
-            `securityCheck`
-            , `infoMessage`
-            , `retrieveParameter`
-            , `validation`
-        ];
-    }
-
-    /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     *
+     * @return {string|null} Access denied message, or null - has access
      */
     static securityCheck(params, message) {
         const commandName = this.getName();
         if (BotHelper.checkUserPermission(commandName, message)) {
-            return;
+            return null;
         }
 
-        const errorMessage = sprintf(
+        return sprintf(
             messages.permissionDenied,
             BotHelper.getAuthorId(message),
             ConfigProvider.get(ConfigParameter.COMMAND_PREFIX),
             commandName
         );
-        throw new CommandEventError(errorMessage);
     }
 
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     *
+     * @return {string|null} Detailed information about command, or null - another case
      */
-    static infoMessage(params, message) {
+    static infoMessageCase(params, message) {
         if (params.length === 0) {
-            throw new CommandEventError(sprintf(
+            return sprintf(
                 messages.configInfo,
                 BotHelper.getAuthorId(message),
                 ConfigProvider.get(ConfigParameter.COMMAND_PREFIX)
-            ));
+            );
+        } else {
+            return null;
         }
     }
 
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     *
+     * @return {string|null} Current config parameter, or null - another case
      */
-    static retrieveParameter(params, message) {
+    static retrieveParameterValueCase(params, message) {
         if (params.length === 1) {
-            throw new CommandEventError(sprintf(
+            return sprintf(
                 messages.configParameterValue,
                 BotHelper.getAuthorId(message),
                 params[0],
                 JSON.stringify(ConfigProvider.get(params[0]))
-            ));
+            );
+        } else {
+            return null;
         }
     }
 
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     *
+     * @return {string|null} Validation fail message, or null - validation success
      */
-    static validation(params, message) {
+    static performValidation(params, message) {
         const { paramName, paramValue } = this[_parseParams](params);
 
         let errors = [];
@@ -98,13 +96,36 @@ module.exports = class extends require(`./abstract-command`) {
         }
 
         if (errors.length) {
-            throw new CommandEventError(sprintf(
+            return sprintf(
                 messages.configParameterValueError,
                 BotHelper.getAuthorId(message),
                 paramName,
                 JSON.stringify(errors)
-            ));
+            );
+        } else {
+            return null;
         }
+    }
+
+    /**
+     * @param {string[]}       params
+     * @param {Discord.Message} message
+     *
+     * @return {string} Config Parameter was changed message
+     */
+    static changeParamValueCase(params, message) {
+        const { paramName, paramValue } = this[_parseParams](params);
+
+        ConfigProvider.set(
+            paramName
+            , ConfigValuePostFormatter.run(paramName, paramValue)
+        );
+        return sprintf(
+            messages.configParameterValueChanged
+            , BotHelper.getAuthorId(message)
+            , paramName
+            , JSON.stringify(ConfigProvider.get(paramName))
+        );
     }
 
     /**
@@ -112,21 +133,21 @@ module.exports = class extends require(`./abstract-command`) {
      * @param {Discord.Message} message
      */
     static run(params, message) {
-        const { paramName, paramValue } = this[_parseParams](params);
+        let userMessage = this.securityCheck(params, message);
+        if (null === userMessage) {
+            userMessage = this.infoMessageCase(params, message);
+        }
+        if (null === userMessage) {
+            userMessage = this.retrieveParameterValueCase(params, message);
+        }
+        if (null === userMessage) {
+            userMessage = this.performValidation(params, message);
+        }
+        if (null === userMessage) {
+            userMessage = this.changeParamValueCase(params, message);
+        }
 
-        ConfigProvider.set(
-            paramName
-            , ConfigValuePostFormatter.run(paramName, paramValue)
-        );
-        BotHelper.sendMessage(
-            message
-            , sprintf(
-                messages.configParameterValueChanged
-                , BotHelper.getAuthorId(message)
-                , paramName
-                , JSON.stringify(ConfigProvider.get(paramName))
-            )
-        );
+        BotHelper.sendMessage(message, userMessage);
     }
 
     // private

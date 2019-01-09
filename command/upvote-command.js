@@ -4,95 +4,96 @@ const { sprintf } = require(`sprintf-js`)
     , chrono = require(`chrono-node`)
     , Discord = require(`discord.js`)
     , { ChainTool, ChainAdapter, ChainConstant } = require(`chain-tools-js`)
+    , DisplayToUserException = require(`../exception/DisplayToUserException`)
     , messages = require(`../messages`)
     , BotHelper = require(`../bot-helper`)
-    , CommandEventError = require(`../command-event-error`)
     , ConfigParameter = require(`../config/parameter`)
     , ConfigProvider = require(`../config/provider`)
     , tool = require(`../tool`)
 ;
 
-// private methods name
-const _parsePostParams = Symbol('parsePostParams');
-
 module.exports = class extends require(`./abstract-command`) {
 
     /**
-     * @returns {string}
+     * @inheritDoc
      */
     static getName() {
         return `upvote`;
     }
 
     /**
-     * Provides list of possible names for command
-     * @returns {string[]}
+     * @inheritDoc
      */
     static getAliases() {
         return [`vote`];
     }
 
     /**
-     * Provides list of methods which should be called before command's run
-     * @returns {string[]}
+     * @inheritDoc
      */
-    static getPreMethods() {
-        return [
-            `validatePostUrl`
-            , `validateVp`
-            , `validatePost`
-        ];
+    static run(params, message) {
+        return new Promise(resolve => resolve({ params: params, message: message }))
+            .then(this.validatePostUrl)
+            .then(this.validateVp)
+            .then(this.validatePost)
+            .then(this.performVote)
+            .then(this.addSuccessComment)
+            .catch((err) => {
+                if (err instanceof DisplayToUserException) {
+                    BotHelper.sendMessage(message, err.message);
+                } else {
+                    console.error(err);
+                    BotHelper.sendMessage(
+                        message
+                        , sprintf(messages.systemError, BotHelper.getAuthorId(message))
+                    );
+                }
+            })
+        ;
     }
 
     /**
-     * Provides list of methods which should be called after command's run
-     * @returns {string[]}
-     */
-    static getPostMethods() {
-        return [`addSuccessComment`];
-    }
-
-    /**
-     * @param {string[]}       params
+     * @param {string[]} params
      * @param {Discord.Message} message
      *
      * @throws CommandEventError When received params is not valid URL
      */
-    static validatePostUrl(params, message) {
+    static async validatePostUrl({ params, message }) {
         if (params.length < 1 || !params[0]) {
             console.error(`Failed to receive post URL.`, params);
 
-            throw new CommandEventError(sprintf(
+            throw new DisplayToUserException(sprintf(
                 messages.upvotePostUrlError
                 , BotHelper.getAuthorId(message)
                 , ConfigProvider.get(ConfigParameter.COMMAND_PREFIX)
             ));
         }
-        const postParams = this[_parsePostParams](params);
+        const postParams = ChainTool.parsePostUrl(params[0]);
         if (null === postParams) {
             console.error(`Failed to parse post URL`, params, postParams);
 
-            throw new CommandEventError(sprintf(
+            throw new DisplayToUserException(sprintf(
                 messages.upvotePostNotFound
                 , BotHelper.getAuthorId(message)
                 , ConfigProvider.get(ConfigParameter.COMMAND_PREFIX)
             ));
         }
+
+        return { params: params, message: message, postParams: postParams };
     }
 
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
-     *
-     * @throws CommandEventError When can't receive vote account or VP of account is too low
+     * @param {Object} postParams
      */
-    static async validateVp(params, message) {
+    static async validateVp({ params, message, postParams }) {
         const minVp = ConfigProvider.get(ConfigParameter.MIN_VP)
             , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
             , wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
         ;
-        if (null === minVp) {
-            return;
+        if (false === Boolean(minVp)) {
+            return { params: params, message: message, postParams: postParams };
         }
 
         let account = null;
@@ -100,7 +101,8 @@ module.exports = class extends require(`./abstract-command`) {
             account = await wekuAdapter.apiGetAccount(voterUsername);
         } catch (err) {
             console.error(err);
-            throw new CommandEventError(sprintf(
+
+            throw new DisplayToUserException(sprintf(
                 messages.systemError
                 , BotHelper.getAuthorId(message)
             ));
@@ -108,7 +110,7 @@ module.exports = class extends require(`./abstract-command`) {
 
         const accountVp = ChainTool.calculateAccountVotingPower(account);
         if (accountVp < minVp) {
-            throw new CommandEventError(sprintf(
+            throw new DisplayToUserException(sprintf(
                 messages.upvoteVpTooLow
                 , BotHelper.getAuthorId(message)
                 , voterUsername
@@ -116,17 +118,19 @@ module.exports = class extends require(`./abstract-command`) {
                 , minVp
             ));
         }
+
+        return { params: params, message: message, postParams: postParams };
     }
 
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
-     *
-     * @throws CommandEventError When can't receive info about post or some criteria are not met
+     * @param {Object} postParams
+     * @param {string} postParams.author
+     * @param {string} postParams.permlink
      */
-    static async validatePost(params, message) {
-        const postParams = this[_parsePostParams](params)
-            , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
+    static async validatePost({ params, message, postParams }) {
+        const voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
             , wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
         ;
         let postContent = null;
@@ -137,14 +141,15 @@ module.exports = class extends require(`./abstract-command`) {
             );
         } catch (err) {
             console.error(err);
-            throw new CommandEventError(sprintf(
+
+            throw new DisplayToUserException(sprintf(
                 messages.systemError
-                , BotHelper.getAuthorId(message))
-            );
+                , BotHelper.getAuthorId(message)
+            ));
         }
         // check is Post exists
         if (0 === postContent.id) {
-            throw new CommandEventError(sprintf(
+            throw new DisplayToUserException(sprintf(
                 messages.upvotePostNotFound
                 , BotHelper.getAuthorId(message)
             ));
@@ -155,7 +160,7 @@ module.exports = class extends require(`./abstract-command`) {
             && postContent.active_votes.length > 0
             && tool.isArrayContainsProperty(postContent.active_votes, `voter`, voterUsername)
         ) {
-            throw new CommandEventError(sprintf(
+            throw new DisplayToUserException(sprintf(
                 messages.upvotePostVotedAlready,
                 BotHelper.getAuthorId(message),
                 voterUsername
@@ -171,7 +176,7 @@ module.exports = class extends require(`./abstract-command`) {
             if (minPostAge) {
                 const minPostDate = chrono.parseDate(minPostAge);
                 if (postCreatedDate > minPostDate) {
-                    throw new CommandEventError(sprintf(
+                    throw new DisplayToUserException(sprintf(
                         messages.upvotePostTooEarly,
                         BotHelper.getAuthorId(message),
                         minPostAge,
@@ -182,7 +187,7 @@ module.exports = class extends require(`./abstract-command`) {
             if (maxPostAge) {
                 const maxPostDate = chrono.parseDate(maxPostAge);
                 if (postCreatedDate < maxPostDate) {
-                    throw new CommandEventError(sprintf(
+                    throw new DisplayToUserException(sprintf(
                         messages.upvotePostTooLate,
                         BotHelper.getAuthorId(message),
                         minPostAge,
@@ -191,17 +196,19 @@ module.exports = class extends require(`./abstract-command`) {
                 }
             }
         }
+
+        return { params: params, message: message, postParams: postParams };
     }
 
     /**
      * @param {Array}          params
      * @param {Discord.Message} message
-     *
-     * @throws CommandEventError If error during vote occurred
+     * @param {Object} postParams
+     * @param {string} postParams.author
+     * @param {string} postParams.permlink
      */
-    static async run(params, message) {
+    static async performVote({ params, message, postParams }) {
         const wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
-            , postParams = this[_parsePostParams](params)
             , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
         ;
         try {
@@ -220,10 +227,12 @@ module.exports = class extends require(`./abstract-command`) {
                     , voterUsername
                 )
             );
+
+            return { params: params, message: message, postParams: postParams };
         } catch (err) {
             console.error(err);
 
-            throw new CommandEventError(sprintf(
+            throw new DisplayToUserException(sprintf(
                 messages.systemError
                 , BotHelper.getAuthorId(message)
             ));
@@ -233,10 +242,12 @@ module.exports = class extends require(`./abstract-command`) {
     /**
      * @param {string[]}       params
      * @param {Discord.Message} message
+     * @param {Object} postParams
+     * @param {string} postParams.author
+     * @param {string} postParams.permlink
      */
-    static async addSuccessComment(params, message) {
+    static async addSuccessComment({ params, message, postParams }) {
         const wekuAdapter = ChainAdapter.factory(ChainConstant.WEKU)
-            , postParams = this[_parsePostParams](params)
             , voterUsername = ConfigProvider.get(ConfigParameter.USERNAME)
         ;
         try {
@@ -249,17 +260,6 @@ module.exports = class extends require(`./abstract-command`) {
         } catch (err) {
             console.error(err);
         }
-    }
-
-    // private
-
-    /**
-     * Parses input params and retrieves Post params
-     * @param {Array} params
-     * @returns {Object|null}
-     */
-    static [_parsePostParams](params) {
-        return ChainTool.parsePostUrl(params[0]);
     }
 
 };

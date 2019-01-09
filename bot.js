@@ -55,10 +55,7 @@ bot.on(`message`, message => {
         return;
     }
 
-    CommandHandler.run(command, params, message)
-        .catch((err) => {
-            console.error(err);
-        });
+    CommandHandler.run(command, params, message);
 });
 
 bot.login(ConfigProvider.get(ConfigParameter.BOT_TOKEN));

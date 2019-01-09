@@ -28,7 +28,7 @@ describe(`ConfigCommand`, () => {
         sandbox.restore();
     });
 
-    it(`should check permission of user to use "config" command`, async () => {
+    it(`should check permission of user to use "config" command`, () => {
         // given
         const params = []
             , userId = faker.random.number()
@@ -44,13 +44,13 @@ describe(`ConfigCommand`, () => {
         );
 
         // when
-        await CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
+        CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
 
         // then
         mockChannel.verify();
     });
 
-    it(`should return info about command on no params`, async () => {
+    it(`should return info about command on no params`, () => {
         // given
         const params = []
             , userId = ConfigProvider.get(ConfigParameter.ADMIN_LIST)[0]
@@ -65,13 +65,13 @@ describe(`ConfigCommand`, () => {
         );
 
         // when
-        await CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
+        CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
 
         // then
         mockChannel.verify();
     });
 
-    it(`should return value of config parameter if only it name given`, async () => {
+    it(`should return value of config parameter if only it name given`, () => {
         // given
         const configParamName = ConfigParameter.WEIGHT
             , params = [configParamName]
@@ -88,13 +88,13 @@ describe(`ConfigCommand`, () => {
         );
 
         // when
-        await CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
+        CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
 
         // then
         mockChannel.verify();
     });
 
-    it(`should change value of config parameter`, async () => {
+    it(`should change value of config parameter`, () => {
         // given
         const configParamName = ConfigParameter.WEIGHT
             , userId = ConfigProvider.get(ConfigParameter.ADMIN_LIST)[0]
@@ -116,7 +116,7 @@ describe(`ConfigCommand`, () => {
         );
 
         // when
-        await CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
+        CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
 
         // then
         mockChannel.verify();
@@ -127,7 +127,7 @@ describe(`ConfigCommand`, () => {
         );
     });
 
-    it(`should change "minVp" config parameter`, async () => {
+    it(`should change "minVp" config parameter`, () => {
         // given
         const configParamName = ConfigParameter.MIN_VP
             , userId = ConfigProvider.get(ConfigParameter.ADMIN_LIST)[0]
@@ -149,7 +149,7 @@ describe(`ConfigCommand`, () => {
         );
 
         // when
-        await CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
+        CommandHandler.run(ConfigCommand.getName(), params, stubMessage);
 
         // then
         mockChannel.verify();

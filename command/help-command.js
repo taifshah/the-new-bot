@@ -1,7 +1,6 @@
 'use strict';
 
 const { sprintf } = require(`sprintf-js`)
-    , Discord = require(`discord.js`)
     , messages = require(`../messages`)
     , BotHelper = require(`../bot-helper`)
     , ConfigParameter = require(`../config/parameter`)
@@ -11,22 +10,21 @@ const { sprintf } = require(`sprintf-js`)
 module.exports = class extends require(`./abstract-command`) {
 
     /**
-     * @returns {string}
+     * @inheritDoc
      */
     static getName() {
         return `help`;
     }
 
     /**
-     * @returns {string[]}
+     * @inheritDoc
      */
     static getAliases() {
         return [`info`];
     }
 
     /**
-     * @param {Array}          params
-     * @param {Discord.Message} message
+     * @inheritDoc
      */
     static run(params, message) {
         BotHelper.sendMessage(

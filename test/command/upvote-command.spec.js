@@ -14,14 +14,14 @@ const faker = require(`faker`)
     , messages = require(`../../messages`)
 ;
 
-describe.only(`UpvoteCommand`, () => {
+describe(`UpvoteCommand`, () => {
 
     /**
      * @param {Array}          params
      * @param {Discord.Message} message
      */
     async function runCommand(params, message) {
-        await CommandHandler.run(UpvoteCommand.getName(), params, message);
+        await UpvoteCommand.run(params, message);
     }
 
     before(() => {

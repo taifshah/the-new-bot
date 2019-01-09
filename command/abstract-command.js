@@ -1,11 +1,15 @@
 'use strict';
 
 const EventEmitter = require(`events`)
-    , CommandHelper = require(`../command-helper`)
+    , Discord = require(`discord.js`)
 ;
 
 module.exports = class AbstractCommand {
 
+    /**
+     * Returns name of command
+     * @returns {string}
+     */
     static getName() {
         throw new Error(`Command should has a name.`);
     }
@@ -19,21 +23,10 @@ module.exports = class AbstractCommand {
     }
 
     /**
-     * Provides list of methods which should be called before command's run
-     * @returns {string[]}
+     * Runs command
+     * @param {Array}           params
+     * @param {Discord.Message} message
      */
-    static getPreMethods() {
-        return [];
-    }
-
-    /**
-     * Provides list of methods which should be called after command's run
-     * @returns {string[]}
-     */
-    static getPostMethods() {
-        return [];
-    }
-
     static run(params, message) {
         throw new Error(`Command should do something.`);
     }
@@ -47,21 +40,7 @@ module.exports = class AbstractCommand {
         ;
 
         possibleEvents.forEach((eventName) => {
-            instance.getPreMethods().forEach((methodName) => {
-                emitter.on(
-                    CommandHelper.buildPreEventName(eventName)
-                    , instance[methodName]
-                    , instance
-                );
-            });
             emitter.on(eventName, instance.run, instance);
-            instance.getPostMethods().forEach((methodName) => {
-                emitter.on(
-                    CommandHelper.buildPostEventName(eventName)
-                    , instance[methodName]
-                    , instance
-                );
-            });
         });
     }
 
