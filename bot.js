@@ -12,7 +12,12 @@ const Discord = require(`discord.js`)
 
 Sentry.init({ dsn: ConfigProvider.get(ConfigParameter.ERROR_TRACKER_DSN) });
 
-bot.on(`error`, console.error);
+bot.on(`error`, (err) => {
+    console.error(
+        new Date() + `: Discord client encountered an error`
+        , err
+    );
+});
 
 bot.on(`ready`, () => {
     console.info(`Bot has started`);
