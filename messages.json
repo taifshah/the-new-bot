@@ -8,7 +8,7 @@
   "upvotePostTooLate": "<@%s> Posts can only be voted between \"%s\" and \"%s\" from it publication date. This post doesn't meet that requirement...",
   "upvoteTooOften": "<@%s> Bot cannot vote too often. It voted recently (%s). Please wait a little bit and retry.",
   "upvoteVpTooLow": "<@%s> `@%s` has %s%% VP left. It only votes when it has at least %s%% VP. Please try again once that has been reached. Current VP value you can see in status.",
-  "upvoteSuccess": ":tada:Congratulations Mr. <@%s> Your Post has been Upvoted by **@%s**. First use #nirob tag.💞👬",
+  "upvoteSuccess": ":Congratulations Mr. <@%s> Your Post has been Upvoted by **@%s**. ",
   "permissionDenied": "Sorry <@%s>, you have no permission to execute `%s%s` command. You can ask the administrators for help.",
   "unsupportedCommand": "Sorry <@%s>, we don't support `%s%s` command. You can ask administrators to add a new command to the bot.",
   "configInfo": "<@%1$s> Using config command you can receive current config value of specified parameter `%2$sconfig (parameter)` or change it value `%2$sconfig (parameter) (new value)`. Be careful with this command :wink:\n\nParameters:\n\t**weight** \t\t\t- Weight of vote\n\t**minVp** \t\t\t- Minimum value of VP when bot will vote\n\t**minPostAge** - Minimum age of post to receive a vote\n\t**maxPostAge** - Maximum age of post to receive a vote",
