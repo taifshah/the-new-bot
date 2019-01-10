@@ -9,6 +9,7 @@ const { sprintf } = require(`sprintf-js`)
     , HelpCommand = require(`./command/help-command`)
     , ConfigCommand = require(`./command/config-command`)
     , UpvoteCommand = require(`./command/upvote-command`)
+    , OwnerCommand = require(`./command/owner-command`)
     , messages = require(`./messages`)
 ;
 
@@ -22,7 +23,12 @@ module.exports = class {
     static register() {
         commandEmitter.removeAllListeners();
 
-        const commands = [ HelpCommand, ConfigCommand, UpvoteCommand ];
+        const commands = [
+            HelpCommand
+            , ConfigCommand
+            , UpvoteCommand
+            , OwnerCommand
+        ];
         commands.forEach((command) => {
             command.register(commandEmitter);
         });

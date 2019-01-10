@@ -11,5 +11,6 @@
   "adminList": ["354999742318641193", "411865062731677696"],
   "runtimeConfigFile": "config-runtime.json",
   "errorTrackerDsn": "ERROR_TRACKER_DSN",
+  "discordUserMentionPattern": "<@%s>",
   "upvoteSuccessComment": "<center><p><br /><img src=\"https://images2.weku.io/DQmRp1TETn49AnyZdmvRU47KZyC183x7sNxgCeXm1TzNsDd/794.png\" alt=\"WEKU Community\" /></p><h1>Join our discord server for more experience:</h1>\n<pre><code>    Click And==<a href=\"https://discordapp.com/invite/GNMJdqC\" rel=\"noopener noreferrer\">Join Fast With Our</a>    </code></pre>\n<p>In order to support WeKu first community builder.</p></center>"
 }
