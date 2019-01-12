@@ -12,5 +12,5 @@
   "runtimeConfigFile": "config-runtime.json",
   "errorTrackerDsn": "ERROR_TRACKER_DSN",
   "discordUserMentionPattern": "<@%s>",
-  "upvoteSuccessComment": "## You got upvote from @Wekunewbies.It is a project created to help the minnows of Weku Community.This project is brought to you by @taifkhan and the whole moderators team.To help this project please upvote this comment "
+  "upvoteSuccessComment": "## You got upvote from @Wekunewbies.It is a project created to help the minnows of Weku Community.This project is brought to you by @taifkhan and the whole moderators team.To help this project please upvote this comment .For more information please join our  discord server [Here](https://discord.gg/xcwwHww) "
 }
