@@ -8,7 +8,7 @@
   "minPostAge": "30 minutes ago",
   "maxPostAge": "4 days ago",
   "commandPrefix" : "$",
-  "adminList": ["478630106257031189"],
+  "adminList": ["693027803947597824"],
   "runtimeConfigFile": "config-runtime.json",
   "errorTrackerDsn": "ERROR_TRACKER_DSN",
   "discordUserMentionPattern": "<@%s>",
